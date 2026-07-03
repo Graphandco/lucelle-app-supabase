@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { supabase } from "@/supabase-client";
 
 const SCHEMA = "shopping_list";
 
@@ -73,7 +72,8 @@ export async function getSupabaseMyProducts() {
 }
 
 export async function getSupabaseCategories() {
-   const { data, error } = await supabase
+   const supabaseAuth = await createClient();
+   const { data, error } = await supabaseAuth
       .schema(SCHEMA)
       .from("categories")
       .select("id, name")

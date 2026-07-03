@@ -2,6 +2,7 @@
 
 import { useCatalogData } from "@/hooks/useCatalogData";
 import ProductCard from "@/components/products/ProductCard";
+import { groupProductsByCategory } from "@/lib/groupProductsByCategory";
 import { useCallback, useMemo, useState } from "react";
 
 function normalizeText(text) {
@@ -33,6 +34,11 @@ export default function Inventaire() {
          normalizeText(product.name).includes(q),
       );
    }, [allProducts, searchTerm]);
+
+   const productGroups = useMemo(
+      () => groupProductsByCategory(filteredProducts, categories),
+      [filteredProducts, categories],
+   );
 
    if (loading) {
       return <div>Chargement...</div>;
@@ -71,32 +77,24 @@ export default function Inventaire() {
             </p>
          ) : null}
 
-         {categories.map((category) => {
-            const productsInCategory = filteredProducts.filter(
-               (product) => product.category?.id === category.id,
-            );
-
-            if (productsInCategory.length === 0) return null;
-
-            return (
-               <div key={category.id} className="mb-6">
-                  <h3 className="text-lg text-white font-medium mb-2">
-                     {category.name}
-                  </h3>
-                  <ul className="rounded-lg px-3 pb-2">
-                     {productsInCategory.map((product) => (
-                        <ProductCard
-                           key={product.documentId}
-                           product={product}
-                           pageType="inventaire"
-                           patchProduct={patchProduct}
-                           reconcile={reconcile}
-                        />
-                     ))}
-                  </ul>
-               </div>
-            );
-         })}
+         {productGroups.map(({ category, products: productsInCategory }) => (
+            <div key={category.id} className="mb-6">
+               <h3 className="text-lg text-white font-medium mb-2">
+                  {category.name}
+               </h3>
+               <ul className="rounded-lg px-3 pb-2">
+                  {productsInCategory.map((product) => (
+                     <ProductCard
+                        key={product.documentId}
+                        product={product}
+                        pageType="inventaire"
+                        patchProduct={patchProduct}
+                        reconcile={reconcile}
+                     />
+                  ))}
+               </ul>
+            </div>
+         ))}
       </div>
    );
 }
