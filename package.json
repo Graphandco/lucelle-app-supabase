@@ -6,7 +6,11 @@
       "dev": "next dev --turbopack",
       "build": "next build",
       "start": "next start",
-      "lint": "next lint"
+      "lint": "next lint",
+      "dev:docker": "concurrently -k \"PORT=3001 node --watch server.js\" \"npx wait-on -t 10000 http://localhost:3001 && npx browser-sync start -c bs-config.docker.js\"",
+      "docker:build": "docker compose -f docker-compose.yml build",
+      "docker:push": "docker compose -f docker-compose.yml push",
+      "docker:deploy": "docker compose -f docker-compose.yml build && docker compose -f docker-compose.yml push"
    },
    "dependencies": {
       "@radix-ui/react-accordion": "^1.2.11",

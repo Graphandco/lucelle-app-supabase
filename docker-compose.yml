@@ -1,16 +1,24 @@
 services:
    app:
+      platform: linux/amd64
       container_name: lucelle-app
-      image: ghcr.io/graphandco/lucelle-app-supabase:latest
-      # Sans ça, Docker réutilise l’ancienne image locale même si `latest` a été repoussé sur GHCR.
+      image: dockerhub.graphandco.com/lucelle-app:latest
+      build:
+         context: .
+         dockerfile: Dockerfile
+         tags:
+            - dockerhub.graphandco.com/lucelle-app:1.0.0
+            - dockerhub.graphandco.com/lucelle-app:latest
+         args:
+            NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       pull_policy: always
       restart: unless-stopped
-      # ports:
-      #    - "3001:3001"
-      # Optionnel : surcharge / variables si l’image n’a pas les NEXT_PUBLIC_* au build.
       env_file:
-         - path: .env
-           required: false
+         - .env
+      environment:
+         HOSTNAME: 0.0.0.0
+         PORT: 3001
       networks:
          - web-network
 
@@ -30,6 +38,7 @@ services:
          options:
             max-size: "10m"
             max-file: "3"
+
 volumes:
    next_cache:
 

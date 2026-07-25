@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Même noms que le workflow GitHub (build-args) → disponibles pour `next build`
+# NEXT_PUBLIC_* inlinées au build Next.js (+ remotePatterns dans next.config)
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
@@ -16,34 +16,27 @@ RUN npm ci
 # Copier le reste du code source
 COPY . .
 
-# Build Next.js
+# Build Next.js (génère .next/standalone)
 RUN npm run build
 
-# Runtime stage
-FROM node:20-alpine
+# Runtime stage — image minimale via output standalone
+FROM node:20-alpine AS runner
 
-# Créer un utilisateur et un groupe non-root
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
 WORKDIR /app
-
-# Copier uniquement les fichiers nécessaires depuis le builder
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.* ./
 
 ENV NODE_ENV=production
 ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
 
-# Donner les droits au user non-root
-RUN chown -R nextjs:nodejs /app
+# Assets publics + sortie standalone (deps tracées uniquement)
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Basculer sur l'utilisateur non-root
 USER nextjs
 
 EXPOSE 3001
 
-CMD ["npm", "run", "start"]
+CMD ["node", "server.js"]

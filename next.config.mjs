@@ -18,6 +18,7 @@ const supabasePatterns = (() => {
 })();
 
 const nextConfig = {
+   output: "standalone",
    images: {
       remotePatterns: [
          {
